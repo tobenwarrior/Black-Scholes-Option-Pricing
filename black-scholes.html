@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black-Scholes Option Pricing</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: #f5f5f5;
+            color: #111;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 48px 20px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .container {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .panel {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 28px 32px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .panel h2 {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #888;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #444;
+            margin-bottom: 5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+            color: #111;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .input-group input:focus {
+            border-color: #555;
+        }
+
+        .results-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .result-card {
+            border-radius: 8px;
+            padding: 20px 24px;
+        }
+
+        .result-card.call {
+            background: #f0faf4;
+            border: 2px solid #34a853;
+        }
+
+        .result-card.put {
+            background: #fef2f2;
+            border: 2px solid #dc3545;
+        }
+
+        .result-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .result-main {
+            text-align: left;
+        }
+
+        .result-card .label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+        }
+
+        .result-card.call .label { color: #2d8a44; }
+        .result-card.put .label { color: #b82d3a; }
+
+        .result-card .price {
+            font-size: 2rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .result-card.call .price { color: #1e7a37; }
+        .result-card.put .price { color: #a8232f; }
+
+        .result-card .notional {
+            font-size: 0.8rem;
+            margin-top: 2px;
+            color: #888;
+        }
+
+        .greeks-row {
+            display: flex;
+            gap: 0;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            margin-top: 16px;
+            padding-top: 16px;
+        }
+
+        .result-greek {
+            text-align: center;
+            flex: 1;
+            border-right: 1px solid rgba(0,0,0,0.08);
+        }
+
+        .result-greek:last-child {
+            border-right: none;
+        }
+
+        .result-greek .greek-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #999;
+            margin-bottom: 2px;
+        }
+
+        .result-greek .greek-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .notional-section {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 2px solid #eee;
+        }
+
+        .notional-section label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #444;
+            margin-bottom: 5px;
+        }
+
+        .notional-section input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+            color: #111;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .notional-section input:focus {
+            border-color: #555;
+        }
+
+        .chart-panel {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 28px 32px;
+            max-width: 900px;
+            width: 100%;
+            margin-top: 32px;
+        }
+
+        .chart-panel h2 {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #888;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 300px;
+        }
+
+        .chart-wrapper canvas {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 12px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .chart-legend span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-line {
+            width: 20px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        .legend-call { background: #34a853; }
+        .legend-put { background: #dc3545; }
+        .legend-spot {
+            background: none;
+            border-top: 2px dashed #aaa;
+            height: 0;
+        }
+
+        @media (max-width: 660px) {
+            .container { flex-direction: column; gap: 20px; }
+            .panel { min-width: unset; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Black-Scholes Option Pricing</h1>
+    <br>
+
+    <div class="container">
+        <div class="panel">
+            <h2>Inputs</h2>
+            <div class="input-group">
+                <label>Current Price ($)</label>
+                <input type="number" id="spot" value="300" step="0.01">
+            </div>
+            <div class="input-group">
+                <label>Strike Price ($)</label>
+                <input type="number" id="strike" value="310" step="0.01">
+            </div>
+            <div class="input-group">
+                <label>Time to Expiration (days)</label>
+                <input type="number" id="days" value="7" step="1">
+            </div>
+            <div class="input-group">
+                <label>Risk-Free Interest Rate (%)</label>
+                <input type="number" id="rate" value="3" step="0.01">
+            </div>
+            <div class="input-group">
+                <label>Volatility (%)</label>
+                <input type="number" id="vol" value="15" step="0.01">
+            </div>
+
+            <div class="notional-section">
+                <label>Notional (# of tokens)</label>
+                <input type="number" id="notional" value="1" step="0.01" min="0">
+            </div>
+        </div>
+
+        <div class="panel results-panel">
+            <h2>Results</h2>
+            <div class="result-card call">
+                <div class="result-main">
+                    <div class="label">Call</div>
+                    <div class="price" id="call-price">$0.17</div>
+                    <div class="notional" id="call-notional">$0.17 per token</div>
+                </div>
+                <div class="greeks-row">
+                    <div class="result-greek">
+                        <div class="greek-label">Delta</div>
+                        <div class="greek-value" id="call-delta">0.03</div>
+                    </div>
+                    <div class="result-greek">
+                        <div class="greek-label">Theta</div>
+                        <div class="greek-value" id="call-theta">-0.12</div>
+                    </div>
+                    <div class="result-greek">
+                        <div class="greek-label">Vega</div>
+                        <div class="greek-value" id="call-vega">0.05</div>
+                    </div>
+                    <div class="result-greek">
+                        <div class="greek-label">Gamma</div>
+                        <div class="greek-value" id="call-gamma">0.00</div>
+                    </div>
+                </div>
+            </div>
+            <div class="result-card put">
+                <div class="result-main">
+                    <div class="label">Put</div>
+                    <div class="price" id="put-price">$9.99</div>
+                    <div class="notional" id="put-notional">$9.99 per token</div>
+                </div>
+                <div class="greeks-row">
+                    <div class="result-greek">
+                        <div class="greek-label">Delta</div>
+                        <div class="greek-value" id="put-delta">-0.97</div>
+                    </div>
+                    <div class="result-greek">
+                        <div class="greek-label">Theta</div>
+                        <div class="greek-value" id="put-theta">-0.09</div>
+                    </div>
+                    <div class="result-greek">
+                        <div class="greek-label">Vega</div>
+                        <div class="greek-value" id="put-vega">0.05</div>
+                    </div>
+                    <div class="result-greek">
+                        <div class="greek-label">Gamma</div>
+                        <div class="greek-value" id="put-gamma">0.00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-panel">
+        <h2>Delta vs. Price Movement</h2>
+        <div class="chart-wrapper">
+            <canvas id="delta-chart"></canvas>
+        </div>
+        <div class="chart-legend">
+            <span><span class="legend-line legend-call"></span> Call Delta</span>
+            <span><span class="legend-line legend-put"></span> Put Delta</span>
+            <span><span class="legend-line legend-spot"></span> Current Price</span>
+        </div>
+    </div>
+
+    <div class="chart-panel">
+        <h2>Theta vs. Price Movement</h2>
+        <div class="chart-wrapper">
+            <canvas id="theta-chart"></canvas>
+        </div>
+        <div class="chart-legend">
+            <span><span class="legend-line legend-call"></span> Call Theta</span>
+            <span><span class="legend-line legend-put"></span> Put Theta</span>
+            <span><span class="legend-line legend-spot"></span> Current Price</span>
+        </div>
+    </div>
+
+    <div class="chart-panel">
+        <h2>Vega vs. Price Movement</h2>
+        <div class="chart-wrapper">
+            <canvas id="vega-chart"></canvas>
+        </div>
+        <div class="chart-legend">
+            <span><span class="legend-line legend-call"></span> Vega</span>
+            <span><span class="legend-line legend-spot"></span> Current Price</span>
+        </div>
+    </div>
+
+    <div class="chart-panel">
+        <h2>Gamma vs. Price Movement</h2>
+        <div class="chart-wrapper">
+            <canvas id="gamma-chart"></canvas>
+        </div>
+        <div class="chart-legend">
+            <span><span class="legend-line legend-call"></span> Gamma</span>
+            <span><span class="legend-line legend-spot"></span> Current Price</span>
+        </div>
+    </div>
+
+    <script>
+        function normCDF(x) {
+            if (x === Infinity) return 1;
+            if (x === -Infinity) return 0;
+            const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+            const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+            const sign = x < 0 ? -1 : 1;
+            x = Math.abs(x) / Math.SQRT2;
+            const t = 1.0 / (1.0 + p * x);
+            const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+            return 0.5 * (1.0 + sign * y);
+        }
+
+        function normPDF(x) {
+            return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+        }
+
+        function calcGreeks(S, K, T, r, sigma) {
+            if (S <= 0 || K <= 0 || T <= 0 || sigma <= 0) return { callDelta: 0, putDelta: 0, callTheta: 0, putTheta: 0, vega: 0, gamma: 0 };
+            const sqrtT = Math.sqrt(T);
+            const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * sqrtT);
+            const d2 = d1 - sigma * sqrtT;
+            const nd1 = normPDF(d1);
+            const Nd2 = normCDF(d2);
+
+            const callDelta = normCDF(d1);
+            const putDelta = callDelta - 1;
+
+            // Theta per day
+            const callTheta = (-(S * nd1 * sigma) / (2 * sqrtT) - r * K * Math.exp(-r * T) * Nd2) / 365;
+            const putTheta = (-(S * nd1 * sigma) / (2 * sqrtT) + r * K * Math.exp(-r * T) * normCDF(-d2)) / 365;
+
+            // Vega per 1% move in vol (same for call and put)
+            const vega = S * sqrtT * nd1 / 100;
+
+            // Gamma (same for call and put)
+            const gamma = nd1 / (S * sigma * sqrtT);
+
+            return { callDelta, putDelta, callTheta, putTheta, vega, gamma };
+        }
+
+        // Chart state for hover
+        let deltaChartState = null;
+        let gammaChartState = null;
+        let thetaChartState = null;
+        let vegaChartState = null;
+
+        function drawGenericChart(canvasId, S, K, T, r, sigma, hoverPrice, type) {
+            const canvas = document.getElementById(canvasId);
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const w = rect.width;
+            const h = rect.height;
+            const pad = { top: 20, right: 20, bottom: 40, left: 55 };
+            const cw = w - pad.left - pad.right;
+            const ch = h - pad.top - pad.bottom;
+
+            ctx.clearRect(0, 0, w, h);
+
+            const minS = S * 0.7;
+            const maxS = S * 1.3;
+            const steps = 200;
+
+            // Compute curves
+            const callVals = [];
+            const putVals = [];
+            for (let i = 0; i <= steps; i++) {
+                const price = minS + (maxS - minS) * (i / steps);
+                const g = calcGreeks(price, K, T, r, sigma);
+                if (type === 'delta') {
+                    callVals.push({ x: price, y: g.callDelta });
+                    putVals.push({ x: price, y: g.putDelta });
+                } else if (type === 'gamma') {
+                    callVals.push({ x: price, y: g.gamma });
+                } else if (type === 'theta') {
+                    callVals.push({ x: price, y: g.callTheta });
+                    putVals.push({ x: price, y: g.putTheta });
+                } else {
+                    callVals.push({ x: price, y: g.vega });
+                }
+            }
+
+            // Y range
+            let minY, maxY;
+            if (type === 'delta') {
+                minY = -1; maxY = 1;
+            } else {
+                let allY = callVals.map(p => p.y);
+                if (putVals.length) allY = allY.concat(putVals.map(p => p.y));
+                minY = Math.min(...allY);
+                maxY = Math.max(...allY);
+                const yPad = (maxY - minY) * 0.15 || 0.01;
+                minY -= yPad;
+                maxY += yPad;
+            }
+
+            function toX(val) { return pad.left + ((val - minS) / (maxS - minS)) * cw; }
+            function toY(val) { return pad.top + ((maxY - val) / (maxY - minY)) * ch; }
+            function fromX(px) { return minS + ((px - pad.left) / cw) * (maxS - minS); }
+
+            const state = { S, K, T, r, sigma, minS, maxS, pad, cw, ch, w, h, toX, toY, fromX };
+            if (type === 'delta') deltaChartState = state;
+            else if (type === 'gamma') gammaChartState = state;
+            else if (type === 'theta') thetaChartState = state;
+            else vegaChartState = state;
+
+            // Grid lines
+            ctx.strokeStyle = '#eee';
+            ctx.lineWidth = 1;
+            const ySteps = type === 'delta' ? 8 : 6;
+            for (let i = 0; i <= ySteps; i++) {
+                const v = minY + (maxY - minY) * (i / ySteps);
+                ctx.beginPath();
+                ctx.moveTo(pad.left, toY(v));
+                ctx.lineTo(pad.left + cw, toY(v));
+                ctx.stroke();
+            }
+
+            // Y axis labels
+            ctx.fillStyle = '#999';
+            ctx.font = '11px -apple-system, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            for (let i = 0; i <= ySteps; i++) {
+                const v = minY + (maxY - minY) * (i / ySteps);
+                ctx.fillText(v.toFixed(type === 'delta' ? 2 : 3), pad.left - 8, toY(v));
+            }
+
+            // X axis labels (percentage)
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            const xTicks = 6;
+            for (let i = 0; i <= xTicks; i++) {
+                const price = minS + (maxS - minS) * (i / xTicks);
+                const pct = ((price - S) / S) * 100;
+                ctx.fillText((pct >= 0 ? '+' : '') + pct.toFixed(0) + '%', toX(price), pad.top + ch + 8);
+            }
+
+            // Zero line (if in range)
+            if (minY <= 0 && maxY >= 0) {
+                ctx.strokeStyle = '#ccc';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(pad.left, toY(0));
+                ctx.lineTo(pad.left + cw, toY(0));
+                ctx.stroke();
+            }
+
+            // Current spot dashed line
+            ctx.strokeStyle = '#aaa';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath();
+            ctx.moveTo(toX(S), pad.top);
+            ctx.lineTo(toX(S), pad.top + ch);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Call curve
+            ctx.strokeStyle = '#34a853';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            callVals.forEach((p, i) => {
+                const x = toX(p.x), y = toY(p.y);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // Put curve (skip for vega — same for call/put)
+            if (putVals.length) {
+                ctx.strokeStyle = '#dc3545';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                putVals.forEach((p, i) => {
+                    const x = toX(p.x), y = toY(p.y);
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+            }
+
+            // Dots
+            const dotPrice = (hoverPrice !== undefined) ? hoverPrice : S;
+            const dotGreeks = calcGreeks(dotPrice, K, T, r, sigma);
+            let callDotY, putDotY;
+            if (type === 'delta') { callDotY = dotGreeks.callDelta; putDotY = dotGreeks.putDelta; }
+            else if (type === 'gamma') { callDotY = dotGreeks.gamma; putDotY = null; }
+            else if (type === 'theta') { callDotY = dotGreeks.callTheta; putDotY = dotGreeks.putTheta; }
+            else { callDotY = dotGreeks.vega; putDotY = null; }
+
+            ctx.fillStyle = '#34a853';
+            ctx.beginPath();
+            ctx.arc(toX(dotPrice), toY(callDotY), 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            if (putDotY !== null) {
+                ctx.fillStyle = '#dc3545';
+                ctx.beginPath();
+                ctx.arc(toX(dotPrice), toY(putDotY), 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // Hover tooltip
+            if (hoverPrice !== undefined) {
+                const hx = toX(hoverPrice);
+
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 3]);
+                ctx.beginPath();
+                ctx.moveTo(hx, pad.top);
+                ctx.lineTo(hx, pad.top + ch);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                const tooltipW = 185;
+                const tooltipH = putDotY !== null ? 52 : 40;
+                let tx = hx + 12;
+                let ty = pad.top + 10;
+                if (tx + tooltipW > w - pad.right) tx = hx - tooltipW - 12;
+
+                ctx.fillStyle = 'rgba(0,0,0,0.85)';
+                ctx.beginPath();
+                ctx.roundRect(tx, ty, tooltipW, tooltipH, 6);
+                ctx.fill();
+
+                const hoverPct = ((hoverPrice - S) / S) * 100;
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 11px -apple-system, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText((hoverPct >= 0 ? '+' : '') + hoverPct.toFixed(1) + '%  ($' + hoverPrice.toFixed(2) + ')', tx + 10, ty + 8);
+
+                const greekNames = { delta: '\u0394', gamma: '\u0393', theta: '\u0398', vega: 'V' };
+                const greekName = greekNames[type];
+                ctx.fillStyle = '#4ade80';
+                ctx.font = '11px -apple-system, sans-serif';
+                if (putDotY !== null) {
+                    ctx.fillText('Call ' + greekName + ': ' + callDotY.toFixed(4), tx + 10, ty + 24);
+                    ctx.fillStyle = '#f87171';
+                    ctx.fillText('Put ' + greekName + ': ' + putDotY.toFixed(4), tx + 10, ty + 37);
+                } else {
+                    ctx.fillText(greekName + ': ' + callDotY.toFixed(4), tx + 10, ty + 24);
+                }
+            }
+
+            // Axis labels
+            ctx.fillStyle = '#999';
+            ctx.font = '11px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'alphabetic';
+            ctx.fillText('Price Movement (%)', pad.left + cw / 2, h - 4);
+
+            ctx.save();
+            ctx.translate(12, pad.top + ch / 2);
+            ctx.rotate(-Math.PI / 2);
+            const yLabels = { delta: 'Delta', gamma: 'Gamma', theta: 'Theta (per day)', vega: 'Vega (per 1% vol)' };
+            ctx.fillText(yLabels[type], 0, 0);
+            ctx.restore();
+        }
+
+        // Hover interactions
+        function setupHover(canvasId, stateGetter, type) {
+            const canvas = document.getElementById(canvasId);
+            canvas.addEventListener('mousemove', function(e) {
+                const state = stateGetter();
+                if (!state) return;
+                const rect = canvas.getBoundingClientRect();
+                const mx = e.clientX - rect.left;
+                const { S, K, T, r, sigma, pad, cw } = state;
+                if (mx >= pad.left && mx <= pad.left + cw) {
+                    const hoverPrice = state.fromX(mx);
+                    drawGenericChart(canvasId, S, K, T, r, sigma, hoverPrice, type);
+                }
+            });
+            canvas.addEventListener('mouseleave', function() {
+                const state = stateGetter();
+                if (!state) return;
+                const { S, K, T, r, sigma } = state;
+                drawGenericChart(canvasId, S, K, T, r, sigma, undefined, type);
+            });
+        }
+
+        setupHover('delta-chart', () => deltaChartState, 'delta');
+        setupHover('gamma-chart', () => gammaChartState, 'gamma');
+        setupHover('theta-chart', () => thetaChartState, 'theta');
+        setupHover('vega-chart', () => vegaChartState, 'vega');
+
+        function calculate() {
+            const S = parseFloat(document.getElementById('spot').value);
+            const K = parseFloat(document.getElementById('strike').value);
+            const days = parseFloat(document.getElementById('days').value);
+            const r = parseFloat(document.getElementById('rate').value) / 100;
+            const sigma = parseFloat(document.getElementById('vol').value) / 100;
+            const notional = parseFloat(document.getElementById('notional').value) || 1;
+
+            if (isNaN(S) || isNaN(K) || isNaN(days) || isNaN(r) || isNaN(sigma) ||
+                S <= 0 || K <= 0 || days <= 0 || sigma <= 0) {
+                document.getElementById('call-price').textContent = '\u2014';
+                document.getElementById('put-price').textContent = '\u2014';
+                document.getElementById('call-notional').textContent = '';
+                document.getElementById('put-notional').textContent = '';
+                document.getElementById('call-delta').textContent = '\u2014';
+                document.getElementById('put-delta').textContent = '\u2014';
+                document.getElementById('call-theta').textContent = '\u2014';
+                document.getElementById('put-theta').textContent = '\u2014';
+                document.getElementById('call-vega').textContent = '\u2014';
+                document.getElementById('put-vega').textContent = '\u2014';
+                document.getElementById('call-gamma').textContent = '\u2014';
+                document.getElementById('put-gamma').textContent = '\u2014';
+                return;
+            }
+
+            const T = days / 365;
+            const sqrtT = Math.sqrt(T);
+            const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * sqrtT);
+            const d2 = d1 - sigma * sqrtT;
+
+            const callPrice = S * normCDF(d1) - K * Math.exp(-r * T) * normCDF(d2);
+            const putPrice = K * Math.exp(-r * T) * normCDF(-d2) - S * normCDF(-d1);
+
+            const callTotal = callPrice * notional;
+            const putTotal = putPrice * notional;
+
+            document.getElementById('call-price').textContent = '$' + callTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('put-price').textContent = '$' + putTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            document.getElementById('call-notional').textContent = '$' + callPrice.toFixed(2) + ' per token';
+            document.getElementById('put-notional').textContent = '$' + putPrice.toFixed(2) + ' per token';
+
+            // Greeks
+            const greeks = calcGreeks(S, K, T, r, sigma);
+            document.getElementById('call-delta').textContent = greeks.callDelta.toFixed(4);
+            document.getElementById('put-delta').textContent = greeks.putDelta.toFixed(4);
+            document.getElementById('call-theta').textContent = greeks.callTheta.toFixed(4);
+            document.getElementById('put-theta').textContent = greeks.putTheta.toFixed(4);
+            document.getElementById('call-vega').textContent = greeks.vega.toFixed(4);
+            document.getElementById('put-vega').textContent = greeks.vega.toFixed(4);
+            document.getElementById('call-gamma').textContent = greeks.gamma.toFixed(6);
+            document.getElementById('put-gamma').textContent = greeks.gamma.toFixed(6);
+
+            // Draw charts
+            drawGenericChart('delta-chart', S, K, T, r, sigma, undefined, 'delta');
+            drawGenericChart('gamma-chart', S, K, T, r, sigma, undefined, 'gamma');
+            drawGenericChart('theta-chart', S, K, T, r, sigma, undefined, 'theta');
+            drawGenericChart('vega-chart', S, K, T, r, sigma, undefined, 'vega');
+        }
+
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', calculate);
+        });
+
+        window.addEventListener('resize', calculate);
+        calculate();
+    </script>
+
+</body>
+</html>
