@@ -171,6 +171,29 @@
             color: #333;
         }
 
+        .greeks-notional-row {
+            display: flex;
+            gap: 0;
+            border-top: 1px dashed rgba(0,0,0,0.08);
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+
+        .greeks-notional-row .greeks-row-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #bbb;
+            margin-bottom: 10px;
+            margin-left: 4px;
+        }
+
+        .greeks-notional-row .result-greek .greek-value {
+            font-size: 0.9rem;
+            color: #555;
+        }
+
         .notional-section {
             margin-top: 20px;
             padding-top: 16px;
@@ -329,6 +352,29 @@
                         <div class="greek-value" id="call-gamma">0.00</div>
                     </div>
                 </div>
+                <div class="greeks-notional-row">
+                    <div style="width:100%">
+                        <div class="greeks-row-label">Position Greeks (× Notional)</div>
+                        <div style="display:flex; gap:0;">
+                            <div class="result-greek">
+                                <div class="greek-label">Delta</div>
+                                <div class="greek-value" id="call-delta-pos">0.03</div>
+                            </div>
+                            <div class="result-greek">
+                                <div class="greek-label">Theta</div>
+                                <div class="greek-value" id="call-theta-pos">-0.12</div>
+                            </div>
+                            <div class="result-greek">
+                                <div class="greek-label">Vega</div>
+                                <div class="greek-value" id="call-vega-pos">0.05</div>
+                            </div>
+                            <div class="result-greek">
+                                <div class="greek-label">Gamma</div>
+                                <div class="greek-value" id="call-gamma-pos">0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="result-card put">
                 <div class="result-main">
@@ -352,6 +398,29 @@
                     <div class="result-greek">
                         <div class="greek-label">Gamma</div>
                         <div class="greek-value" id="put-gamma">0.00</div>
+                    </div>
+                </div>
+                <div class="greeks-notional-row">
+                    <div style="width:100%">
+                        <div class="greeks-row-label">Position Greeks (× Notional)</div>
+                        <div style="display:flex; gap:0;">
+                            <div class="result-greek">
+                                <div class="greek-label">Delta</div>
+                                <div class="greek-value" id="put-delta-pos">-0.97</div>
+                            </div>
+                            <div class="result-greek">
+                                <div class="greek-label">Theta</div>
+                                <div class="greek-value" id="put-theta-pos">-0.09</div>
+                            </div>
+                            <div class="result-greek">
+                                <div class="greek-label">Vega</div>
+                                <div class="greek-value" id="put-vega-pos">0.05</div>
+                            </div>
+                            <div class="result-greek">
+                                <div class="greek-label">Gamma</div>
+                                <div class="greek-value" id="put-gamma-pos">0.00</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -724,6 +793,14 @@
                 document.getElementById('put-vega').textContent = '\u2014';
                 document.getElementById('call-gamma').textContent = '\u2014';
                 document.getElementById('put-gamma').textContent = '\u2014';
+                document.getElementById('call-delta-pos').textContent = '\u2014';
+                document.getElementById('call-theta-pos').textContent = '\u2014';
+                document.getElementById('call-vega-pos').textContent = '\u2014';
+                document.getElementById('call-gamma-pos').textContent = '\u2014';
+                document.getElementById('put-delta-pos').textContent = '\u2014';
+                document.getElementById('put-theta-pos').textContent = '\u2014';
+                document.getElementById('put-vega-pos').textContent = '\u2014';
+                document.getElementById('put-gamma-pos').textContent = '\u2014';
                 return;
             }
 
@@ -754,6 +831,16 @@
             document.getElementById('put-vega').textContent = greeks.vega.toFixed(4);
             document.getElementById('call-gamma').textContent = greeks.gamma.toFixed(6);
             document.getElementById('put-gamma').textContent = greeks.gamma.toFixed(6);
+
+            // Position Greeks (per-unit × notional)
+            document.getElementById('call-delta-pos').textContent = (greeks.callDelta * notional).toFixed(4);
+            document.getElementById('call-theta-pos').textContent = (greeks.callTheta * notional).toFixed(4);
+            document.getElementById('call-vega-pos').textContent = (greeks.vega * notional).toFixed(4);
+            document.getElementById('call-gamma-pos').textContent = (greeks.gamma * notional).toFixed(6);
+            document.getElementById('put-delta-pos').textContent = (greeks.putDelta * notional).toFixed(4);
+            document.getElementById('put-theta-pos').textContent = (greeks.putTheta * notional).toFixed(4);
+            document.getElementById('put-vega-pos').textContent = (greeks.vega * notional).toFixed(4);
+            document.getElementById('put-gamma-pos').textContent = (greeks.gamma * notional).toFixed(6);
 
             // Draw charts
             drawGenericChart('delta-chart', S, K, T, r, sigma, undefined, 'delta');
