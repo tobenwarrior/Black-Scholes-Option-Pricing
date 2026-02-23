@@ -354,23 +354,23 @@
                 </div>
                 <div class="greeks-notional-row">
                     <div style="width:100%">
-                        <div class="greeks-row-label">Position Greeks (× Notional)</div>
+                        <div class="greeks-row-label">Position Greeks ($)</div>
                         <div style="display:flex; gap:0;">
                             <div class="result-greek">
                                 <div class="greek-label">Delta</div>
-                                <div class="greek-value" id="call-delta-pos">0.03</div>
+                                <div class="greek-value" id="call-delta-pos">$0.03</div>
                             </div>
                             <div class="result-greek">
                                 <div class="greek-label">Theta</div>
-                                <div class="greek-value" id="call-theta-pos">-0.12</div>
+                                <div class="greek-value" id="call-theta-pos">-$0.12</div>
                             </div>
                             <div class="result-greek">
                                 <div class="greek-label">Vega</div>
-                                <div class="greek-value" id="call-vega-pos">0.05</div>
+                                <div class="greek-value" id="call-vega-pos">$0.05</div>
                             </div>
                             <div class="result-greek">
                                 <div class="greek-label">Gamma</div>
-                                <div class="greek-value" id="call-gamma-pos">0.00</div>
+                                <div class="greek-value" id="call-gamma-pos">$0.00</div>
                             </div>
                         </div>
                     </div>
@@ -402,23 +402,23 @@
                 </div>
                 <div class="greeks-notional-row">
                     <div style="width:100%">
-                        <div class="greeks-row-label">Position Greeks (× Notional)</div>
+                        <div class="greeks-row-label">Position Greeks ($)</div>
                         <div style="display:flex; gap:0;">
                             <div class="result-greek">
                                 <div class="greek-label">Delta</div>
-                                <div class="greek-value" id="put-delta-pos">-0.97</div>
+                                <div class="greek-value" id="put-delta-pos">-$0.97</div>
                             </div>
                             <div class="result-greek">
                                 <div class="greek-label">Theta</div>
-                                <div class="greek-value" id="put-theta-pos">-0.09</div>
+                                <div class="greek-value" id="put-theta-pos">-$0.09</div>
                             </div>
                             <div class="result-greek">
                                 <div class="greek-label">Vega</div>
-                                <div class="greek-value" id="put-vega-pos">0.05</div>
+                                <div class="greek-value" id="put-vega-pos">$0.05</div>
                             </div>
                             <div class="result-greek">
                                 <div class="greek-label">Gamma</div>
-                                <div class="greek-value" id="put-gamma-pos">0.00</div>
+                                <div class="greek-value" id="put-gamma-pos">$0.00</div>
                             </div>
                         </div>
                     </div>
@@ -832,15 +832,20 @@
             document.getElementById('call-gamma').textContent = greeks.gamma.toFixed(6);
             document.getElementById('put-gamma').textContent = greeks.gamma.toFixed(6);
 
-            // Position Greeks (per-unit × notional)
-            document.getElementById('call-delta-pos').textContent = (greeks.callDelta * notional).toFixed(4);
-            document.getElementById('call-theta-pos').textContent = (greeks.callTheta * notional).toFixed(4);
-            document.getElementById('call-vega-pos').textContent = (greeks.vega * notional).toFixed(4);
-            document.getElementById('call-gamma-pos').textContent = (greeks.gamma * notional).toFixed(6);
-            document.getElementById('put-delta-pos').textContent = (greeks.putDelta * notional).toFixed(4);
-            document.getElementById('put-theta-pos').textContent = (greeks.putTheta * notional).toFixed(4);
-            document.getElementById('put-vega-pos').textContent = (greeks.vega * notional).toFixed(4);
-            document.getElementById('put-gamma-pos').textContent = (greeks.gamma * notional).toFixed(6);
+            // Position Greeks in dollars (per-unit × notional × spot price)
+            function fmtDollar(v) {
+                const sign = v < 0 ? '-' : '';
+                return sign + '$' + Math.abs(v).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+            const dollarNotional = notional * S;
+            document.getElementById('call-delta-pos').textContent = fmtDollar(greeks.callDelta * dollarNotional);
+            document.getElementById('call-theta-pos').textContent = fmtDollar(greeks.callTheta * dollarNotional);
+            document.getElementById('call-vega-pos').textContent = fmtDollar(greeks.vega * dollarNotional);
+            document.getElementById('call-gamma-pos').textContent = fmtDollar(greeks.gamma * dollarNotional);
+            document.getElementById('put-delta-pos').textContent = fmtDollar(greeks.putDelta * dollarNotional);
+            document.getElementById('put-theta-pos').textContent = fmtDollar(greeks.putTheta * dollarNotional);
+            document.getElementById('put-vega-pos').textContent = fmtDollar(greeks.vega * dollarNotional);
+            document.getElementById('put-gamma-pos').textContent = fmtDollar(greeks.gamma * dollarNotional);
 
             // Draw charts
             drawGenericChart('delta-chart', S, K, T, r, sigma, undefined, 'delta');
